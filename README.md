@@ -48,3 +48,16 @@ The `demo/` folder shows the same payment (`DEMO002`) sent twice against the run
 - `1_first_post_201.txt`: the first request returns `201 Created`.
 - `2_second_post_409.txt`: the identical second request returns `409 Conflict`.
 - `3_row_count.txt`: only one row with that reference exists in the database.
+
+
+## How a request travels
+
+Example: `POST /payments/` with a new payment.
+
+1. The client sends a `POST` request to `/payments/` with the headers `Content-Type: application/json` and `X-CSRFToken`, and a JSON body containing `reference`, `amount` and `currency`.
+2. Django passes the request through its middleware first. `CsrfViewMiddleware` checks the token, and a request without a valid one is rejected with `403` before it reaches any of my code.
+3. `pesaway_simulator/urls.py` sends paths that start with `payments/` to `payments_app/api_urls.py`, which maps `/payments/` to the `payment_list` view in `api_views.py`.
+4. The view reads the body with `parse_json`. If the body is broken JSON, or is not a JSON object, it returns `400` straight away.
+5. The view validates each field: `reference` must be a non-empty string, `amount` must be a positive number with at most two decimal places, `currency` must be a 3-letter code, and `status` must not be sent. If anything is wrong, it returns `400` with a message for each bad field, and nothing is saved.
+6. The view calls `Payment.objects.create(...)` inside `transaction.atomic()`. The ORM turns this into an SQL `INSERT`, and the unique constraint on `reference` makes the database refuse a duplicate. The view catches that `IntegrityError`, and the `atomic()` block keeps the rest of the transaction usable.
+7. The view builds a JSON response. A new payment returns `201` with the stored payment (its `status` is `PENDING`), and a duplicate reference returns `409` with an error message. The response travels back through the middleware to the client.
