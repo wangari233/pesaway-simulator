@@ -45,4 +45,15 @@ class PaymentCreateTests(TestCase):
                 self.assertEqual(response.status_code, 400)
                 self.assertIn("amount", response.json()["fields"])
 
-        self.assertEqual(Payment.objects.count(), 0)    
+        self.assertEqual(Payment.objects.count(), 0)
+
+    def test_invalid_json_rejected(self):
+        response = self.client.post(
+            "/payments/",
+            data='{"reference": "TXN400", "amount": ',
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(Payment.objects.count(), 0)
