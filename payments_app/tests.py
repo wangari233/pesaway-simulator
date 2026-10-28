@@ -69,3 +69,21 @@ class PaymentCreateTests(TestCase):
         self.assertEqual(get_response.status_code, 404)
         self.assertEqual(patch_response.status_code, 404)
         self.assertIn("error", get_response.json())       
+
+    def test_status_update_disallowed(self):
+        created = self.post_json(
+            {"reference": "TXN500", "amount": "75.00", "currency": "KES"}
+        )
+        payment_id = created.json()["id"]
+
+        response = self.client.patch(
+            f"/payments/{payment_id}/",
+            data=json.dumps({"status": "COMPLETED"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+
+        payment = Payment.objects.get(pk=payment_id)
+        self.assertEqual(payment.status, "PENDING")        
