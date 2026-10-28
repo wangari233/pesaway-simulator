@@ -32,4 +32,17 @@ class PaymentCreateTests(TestCase):
 
         self.assertEqual(first.status_code, 201)
         self.assertEqual(second.status_code, 409)
-        self.assertEqual(Payment.objects.filter(reference="TXN200").count(), 1)    
+        self.assertEqual(Payment.objects.filter(reference="TXN200").count(), 1) 
+
+    def test_invalid_amount_rejected(self):
+        bad_amounts = ["0", "-5", "abc", "10.123", True]
+
+        for bad in bad_amounts:
+            with self.subTest(amount=bad):
+                response = self.post_json(
+                    {"reference": "TXN300", "amount": bad, "currency": "KES"}
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("amount", response.json()["fields"])
+
+        self.assertEqual(Payment.objects.count(), 0)    
