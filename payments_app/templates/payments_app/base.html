@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Pesaway Simulator{% endblock %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .status-pending { color: orange; font-weight: bold; }
+        .status-completed { color: green; font-weight: bold; }
+        .status-failed { color: red; font-weight: bold; }
+        a { text-decoration: none; color: #007bff; }
+    </style>
+</head>
+<body>
+    <h1>Pesaway Payments Simulator</h1>
+    <hr>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>

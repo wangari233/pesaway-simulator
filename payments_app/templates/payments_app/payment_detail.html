@@ -1,0 +1,17 @@
+{% extends "payments_app/base.html" %}
+
+{% block title %}Payment {{ payment.reference }}{% endblock %}
+
+{% block content %}
+    <h2>Payment Details</h2>
+
+    <p><strong>Reference:</strong> {{ payment.reference }}</p>
+    <p><strong>Amount:</strong> {{ payment.amount }} {{ payment.currency }}</p>
+    <p><strong>Status:</strong> 
+        <span class="status-{{ payment.status|lower }}">{{ payment.status }}</span>
+    </p>
+    <p><strong>Created At:</strong> {{ payment.created_at }}</p>
+
+    <br>
+    <a href="{% url 'payment_list' %}">← Back to all payments</a>
+{% endblock %}
