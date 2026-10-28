@@ -1,6 +1,6 @@
 import json
 
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from .models import Payment
 
@@ -86,4 +86,18 @@ class PaymentCreateTests(TestCase):
         self.assertIn("error", response.json())
 
         payment = Payment.objects.get(pk=payment_id)
-        self.assertEqual(payment.status, "PENDING")        
+        self.assertEqual(payment.status, "PENDING")    
+
+    def test_post_without_csrf_token_rejected(self):
+        strict_client = Client(enforce_csrf_checks=True)
+
+        response = strict_client.post(
+            "/payments/",
+            data=json.dumps(
+                {"reference": "TXN600", "amount": "10.00", "currency": "KES"}
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(Payment.objects.count(), 0)
