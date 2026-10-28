@@ -1,0 +1,3 @@
+﻿13 objects imported automatically (use -v 2 for details).
+
+Rows with reference DEMO002: 1
