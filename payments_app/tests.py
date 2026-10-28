@@ -57,3 +57,15 @@ class PaymentCreateTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
         self.assertEqual(Payment.objects.count(), 0)
+
+    def test_unknown_id_returns_404(self):
+        get_response = self.client.get("/payments/9999/")
+        patch_response = self.client.patch(
+            "/payments/9999/",
+            data=json.dumps({"amount": "50.00"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(get_response.status_code, 404)
+        self.assertEqual(patch_response.status_code, 404)
+        self.assertIn("error", get_response.json())       
