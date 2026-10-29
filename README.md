@@ -69,10 +69,10 @@ python manage.py shell -c "from payments_app.models import Payment; print(Paymen
 
 ## Design decisions
 
-- **Unique constraint in the database:** <reword in your own words: the database is the final guard against duplicates, because checking first and then saving could let two simultaneous requests both pass>
-- **Status cannot be changed through PATCH:** <reword: new payments always start as PENDING and a normal update can only edit amount or currency>
-- **No DELETE endpoint:** <reword: payment records are never removed through the API>
-- **CSRF protection stays on:** <reword: POST and PATCH need the token rather than disabling CSRF globally>
+- **Unique constraint in the database:** The database enforces unique references instead of the view checking first and saving second. With a check-then-save approach, two simultaneous requests with the same reference could both pass the check and both be stored.
+- **Status cannot be changed through PATCH:** New payments always start as `PENDING`, and a normal update can only edit `amount` or `currency`. A client cannot mark its own payment as completed or failed by sending a status.
+- **No DELETE endpoint:** A payment is a financial record, so the API never removes one. Deleting was only explored on a test record in the Django shell.
+- **CSRF protection stays on:** POST and PATCH need the CSRF token, and I did not disable CSRF globally to make testing easier. Clients get the token from the cookie set by a GET request.
 
 ## How a request travels
 
@@ -89,4 +89,10 @@ Example: `POST /payments/` with a new payment.
 
 ## Self-review
 
-<write about half a page in your own words: what works well and what you tested versus assumed; what could break under load, such as two simultaneous requests with the same reference; what you found hardest and how you solved it; what you would add next, such as pagination, authentication or idempotency keys>
+**What works well and what I tested.** I tested ... (name the cases your seven tests cover). I only assumed or checked by hand ... (name anything not covered by a test, such as the status filter or an empty PATCH body).
+
+**What could break.** If two requests with the same reference arrive at the same moment, ... (what happens, and why?). Other limits: ... (for example, no authentication, SQLite for a single server, no pagination on the list).
+
+**What was hardest.** The hardest part was ... (for example, getting POST past CSRF, or tests failing because of an old leftover app). I solved it by ...
+
+**What I would do next.** First, ... Second, ... (say why each matters).
