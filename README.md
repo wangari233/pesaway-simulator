@@ -89,10 +89,11 @@ Example: `POST /payments/` with a new payment.
 
 ## Self-review
 
-**What works well and what I tested.** I tested ... (name the cases your seven tests cover). I only assumed or checked by hand ... (name anything not covered by a test, such as the status filter or an empty PATCH body).
+**What works well and what I tested.** The API creates, lists, retrieves and updates payments, and a duplicate reference is rejected with a `409` while only one row is stored. Seven automated tests cover valid creation, a duplicate reference, an invalid amount, invalid JSON, an unknown ID, a disallowed status update and CSRF enforcement, and I demonstrated the duplicate case against the running server (see `demo/`). I did not write automated tests for the status filter, an empty PATCH body or PATCH with other non-editable fields, so the table entries for them are based on reading the code.
 
-**What could break.** If two requests with the same reference arrive at the same moment, ... (what happens, and why?). Other limits: ... (for example, no authentication, SQLite for a single server, no pagination on the list).
+**What could break.** If two requests with the same reference arrive at the same moment, the database lets one `INSERT` succeed and refuses the other, and the view turns that `IntegrityError` into a `409`. This is why I rely on the unique constraint and not on checking for an existing row first. Other limits are that there is no authentication, so anyone who can reach the server can create payments, that the project uses SQLite, which suits one development server but not heavy concurrent writes, and that the list endpoint has no pagination.
 
-**What was hardest.** The hardest part was ... (for example, getting POST past CSRF, or tests failing because of an old leftover app). I solved it by ...
+**What was hardest.** When I ran the full test suite, one test errored with an import error even though my seven tests passed. An old `payments` folder was still in the project, and Django's test runner picked up its `tests.py`, but its model belonged to an app that was no longer in `INSTALLED_APPS`. I read the traceback, checked that nothing imported the old app, stopped tracking it in git and moved it out of the project, after which all seven tests ran cleanly.
 
-**What I would do next.** First, ... Second, ... (say why each matters).
+**What I would do next.** First, add authentication, so only authorised clients can create or update payments. Second, add pagination to the list endpoint, so it still works once there are many payments. Third, add idempotency keys, so a client retrying a request after a timeout can't create a duplicate payment with a new reference.
+I also checked the status filter, an empty PATCH body and PATCH with other non-editable fields by hand against the running server.
