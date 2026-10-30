@@ -13,16 +13,18 @@ EDITABLE_FIELDS = {"amount", "currency"}
 def error(message, status, **extra):
     return JsonResponse({"error": message, **extra}, status=status)
 
-
 def serialize(p):
     return {
         "id": p.id,
         "reference": p.reference,
         "amount": str(p.amount),
         "currency": p.currency,
+        "phone_number": p.phone_number,
+        "payment_method": p.payment_method,
         "status": p.status,
         "created_at": p.created_at.isoformat(),
     }
+
 def parse_json(request):
     try:
         data = json.loads(request.body)
@@ -61,7 +63,7 @@ def payment_list(request):
             payments = payments.filter(status=status)
         return JsonResponse({"payments": [serialize(p) for p in payments]})
 
-    # POST
+       # POST
     data, err = parse_json(request)
     if err:
         return err
@@ -82,8 +84,18 @@ def payment_list(request):
             errors["amount"] = str(e)
 
     currency = data.get("currency")
-    if not isinstance(currency, str) or len(currency) != 3 or not currency.isalpha():
-        errors["currency"] = "required, 3-letter code such as KES"
+    if not isinstance(currency, str) or currency.upper() not in Payment.Currency.values:
+        errors["currency"] = f"required, one of: {', '.join(Payment.Currency.values)}"
+
+    phone_number = data.get("phone_number")
+    if not isinstance(phone_number, str) or not phone_number.strip():
+        errors["phone_number"] = "required, non-empty string"
+    elif len(phone_number.strip()) > 15:
+        errors["phone_number"] = "at most 15 characters"
+
+    payment_method = data.get("payment_method")
+    if payment_method not in Payment.PaymentMethod.values:
+        errors["payment_method"] = f"required, one of: {', '.join(Payment.PaymentMethod.values)}"
 
     if "status" in data:
         errors["status"] = "cannot be set; new payments always start as PENDING"
@@ -97,8 +109,10 @@ def payment_list(request):
                 reference=reference.strip(),
                 amount=amount,
                 currency=currency.upper(),
-        ) 
-    except IntegrityError:        
+                phone_number=phone_number.strip(),
+                payment_method=payment_method,
+            )
+    except IntegrityError:
         return error("A payment with this reference already exists", 409)
     except DatabaseError:
         return error("Database error, please try again later", 500)
@@ -140,8 +154,8 @@ def payment_detail(request, pk):
             errors["amount"] = str(e)
     if "currency" in data:
         currency = data["currency"]
-        if not isinstance(currency, str) or len(currency) != 3 or not currency.isalpha():
-            errors["currency"] = "must be a 3-letter code such as KES"
+        if not isinstance(currency, str) or currency.upper() not in Payment.Currency.values:
+            errors["currency"] = f"must be one of: {', '.join(Payment.Currency.values)}"
         else:
             payment.currency = currency.upper()
     if errors:

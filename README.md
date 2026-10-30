@@ -70,7 +70,7 @@ python manage.py shell -c "from payments_app.models import Payment; print(Paymen
 ## Design decisions
 
 - **Unique constraint in the database:** The database enforces unique references instead of the view checking first and saving second. With a check-then-save approach, two simultaneous requests with the same reference could both pass the check and both be stored.
-- **Status cannot be changed through PATCH:** New payments always start as `PENDING`, and a normal update can only edit `amount` or `currency`. A client cannot mark its own payment as completed or failed by sending a status.
+- **Status cannot be changed through PATCH:** New payments always start as `PENDING`, and a normal update can only edit `amount` or `currency`. A client cannot mark its own payment as successful or failed by sending a status.
 - **No DELETE endpoint:** A payment is a financial record, so the API never removes one. Deleting was only explored on a test record in the Django shell.
 - **CSRF protection stays on:** POST and PATCH need the CSRF token, and I did not disable CSRF globally to make testing easier. Clients get the token from the cookie set by a GET request.
 
